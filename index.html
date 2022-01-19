@@ -1,0 +1,648 @@
+<head>
+    <meta charset="utf-8">
+    <!--https://stackoverflow.com/questions/39239024/what-is-initial-scale-1-0-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--content="width=420", initial-scale=1.0-->
+    <link rel="shortcut icon" type="image/png" href="favicon.png" />
+    <title>Szabadságbeszéd demo</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="NoSleep.js"></script>
+
+    <!--link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.9.0/css/ol.css" type="text/css"-->
+    <link rel="stylesheet" href="ol.css" type="text/css">
+    <link rel="stylesheet" href="filepond.css" type="text/css">
+    <link rel="stylesheet" href="plugins/filepond-plugin-image-preview.css" type="text/css">
+    <style>
+        .map {
+            height: 420px;
+            width: 100%;
+        }
+    </style>
+    <!--script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.9.0/build/ol.js"></script-->
+    <script src="ol.js"></script>
+    <!--link rel="shortcut icon" type="image/png" href="/faviconCli.png" /-->
+    <script type="text/javascript" src="jquery-3.2.1.js"></script>
+    <script src="plugins/filepond-plugin-file-validate-type.js"></script>
+    <script src="plugins/filepond-plugin-file-validate-size.js"></script>
+    <script src="plugins/filepond-plugin-image-validate-size.js"></script>
+    <script src="plugins/filepond-plugin-image-preview.js"></script>
+    <script src="plugins/filepond-plugin-image-resize.js"></script>
+
+
+    <link rel="stylesheet" href="photo-grid-box-vanilla.min.css" />
+    <script src="photo-grid-box-vanilla.min.js"></script>
+</head>
+
+<body>
+    <script src="filepond.js"></script>
+    <!-- 
+        DEBUG DIV
+    -->
+    <div id="debug">
+        DEBUG<br>
+        coordinates: <code id="coordinates"></code><br>
+        accuracy: <code id="accuracy"></code><br>
+        <p>
+            távolságok: <code id="distances"></code>
+        </p>
+    </div>
+
+
+    <button class="full" id="start" onclick="startSound()">Hangok engedélyezése</button>
+
+    <!--
+        ALWAYS VISIBLE
+    -->
+    <h3 id="cim">Minta cím</h3>
+
+    <!--
+        #0 DIRECTIONS DIV
+    -->
+    <div id="directionsDiv">
+        <p id="directions" style="display:inline"></p>
+    </div>
+
+    <!-- 
+        #1 CONTINUE DIV
+        visible only when user has just arrived at a POI
+    -->
+
+    <div id="continue">
+        Megérkeztél! Ez a
+        <!--code id="arrived"></code-->
+        <p style="display: inline;color: brown;" id="arrived"></p>
+        <br>Kattints a "tovább" gombra a folytatáshoz!
+        <br><button onclick="startLocal()">tovább</button>
+    </div>
+
+    <!-- 
+        #2 LOCAL DIV
+        visible only afer user pressed "tovább" button
+    -->
+
+    <div id="local1">
+        <div id="szoveg">
+            <p id="szovegInner"></p>
+        </div>
+        <!-- https://www.brightcove.com/en/resources/blog/what-formats-do-i-need-for-html5-video/ -->
+        <video id="video1" preload="auto" type="video/mp4" width="100%" controls src="">
+            Your browser does not support the video element.
+        </video>
+        <!--iframe id="video2" width="420" height="315"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" src="" allowfullscreen>
+        </iframe-->
+        <div id="videowrapper">
+            <div id="video2"></div>
+        </div>
+        <audio id="audio1" preload="auto" type="audio/mpeg" width="100%" controls>
+            Your browser does not support the audio element.
+        </audio>
+        <div id="inputDiv">
+            <label for="input1" id="inputLabel">Szöveg beírása</label>
+            <input type="text" id="input1" name="gfjhsdg">
+        </div>
+    </div>
+
+    <!-- 
+        #3 LOCAL DIV 2
+        visible after PHASE #2 is finished
+    -->
+    <div id="local2">
+        Töltsd fel a fotót a tárgyról, amit magaddal vinnél,
+        hogy az otthonra emlékeztessen, ha elhagynád az országot.
+        Az online galériában megtalálod a többiek által készített fotókat is,
+        megnézheted azokat is, majd ha indulnál tovább, kattints rá a következő gombra.
+        <form action="phpAPIforUpload/submit.php" method="post" enctype="multipart/form-data" target="hidden-form">
+            <button type="submit">Submit</button>
+            <input type="file" id="file-uploader" accept="image/*" class="filepond" name="filepond">
+        </form>
+        <iframe name="hidden-form">
+            kfjshdkfjhskljdfhs<br>sdfjhgsdjhgf<br>sdjhgsdjhfs<br>
+        </iframe><!--style="display:none" -->
+    </div>
+
+    <div id="local3">
+        Itt lesznek a fotók
+        <div id="container"></div>
+    </div>
+
+    <!-- 
+        #0 MAP DIV
+        visible only when user isn't at a POI
+    -->
+
+    <div id="mapDiv">
+        <div id="map" class="map"></div>
+    </div>
+
+    <script type="text/javascript" src="mymap.js"> </script>
+
+    <script type="text/javascript">
+        //GLOBAL STATE VARIABLES
+        var maxLocations = -1;
+        const phaseColor0 = "#dddddd",
+            phaseColor1 = "#ffdddd",
+            phaseColor2 = "#ddddff";
+        var iAmAtPOI = -2;
+        var nextPOI = 0;
+
+        var coords = [];
+
+        //Keep audio playback in the background
+        var noSleep = new NoSleep();
+
+        function el(id) {
+            return document.getElementById(id);
+        }
+
+        function startSound() {
+            document.getElementById('start').remove();
+            ////////////////////PHASE #0
+            //$('#mapDiv').slideDown();
+        }
+
+
+
+        ////////////////////////////////////////////////////////////////////////
+        //Image upload
+        ////////////////////////////////////////////////////////////////////////
+        // Get a reference to the file input element
+        const inputElement = document.querySelector('input[type="file"]');
+
+        // Create a FilePond instance
+        //const pond = FilePond.create(inputElement);
+
+        //FilePond.parse(document.body);
+
+        FilePond.registerPlugin(
+            FilePondPluginFileValidateType,
+            FilePondPluginFileValidateSize,
+            FilePondPluginImageValidateSize,
+            //FilePondPluginImageExifOrientation,
+            FilePondPluginImagePreview,
+            //FilePondPluginImageCrop,
+            FilePondPluginImageResize,
+            //FilePondPluginImageTransform,
+            //FilePondPluginImageEdit
+        );
+
+        var pond = FilePond.create(
+            inputElement, {
+                acceptedFileTypes: ['image/jpeg', 'image/png'],
+                labelIdle: '<span class="filepond--label-action">Browse</span> your photo',
+                imagePreviewMaxHeight: 170,
+                //imageCropAspectRatio: '1:1',
+                styePanelAspectRatio: '1:1',
+                imageResizeTargetWidth: 200,
+                imageResizeTargetHeight: 200,
+                stylePanelLayout: 'integrated',
+                //styleLoadIndicatorPosition: 'center bottom',
+                //styleProgressIndicatorPosition: 'right bottom',
+                //styleButtonRemoveItemPosition: 'left bottom',
+                //styleButtonProcessItemPosition: 'right bottom',
+                //minFileSize: '100KB',
+                //checkValidity: true,
+                allowImageValidateSize: true,
+                imageValidateSizeMinWidth: 50,
+                server: 'phpAPIforUpload/'
+            }
+        );
+
+        pond.on('error', (error, file) => {
+            console.log('Error', error, file);
+            pond.removeFile(file);
+        });
+
+        pond.on('warning', (error, file) => {
+            console.log('Warning', error, file);
+        });
+
+        var form = document.querySelector("form");
+        form.addEventListener('submit', function () {
+            nextPhase(3);
+        });
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
+
+        // function readMultipleFiles(evt) {
+        //     //Retrieve all the files from the FileList object
+        //     var files = evt.target.files;
+
+        //     if (files) {
+        //         for (var i = 0, f; f = files[i]; i++) {
+        //             var r = new FileReader();
+        //             r.onload = (function (f) {
+        //                 return function (e) {
+        //                     var contents = e.target.result;
+        //                     $('body').append('<h1>' + f.name + '</h1><img src="learn/' + f.name + '"/>');
+        //                 };
+        //             })(f);
+
+        //             r.readAsText(f);
+        //         }
+        //     } else {
+        //         alert("Failed to load files");
+        //     }
+        // }
+        const imgs = [{
+                src: '1.jpg',
+                payload: {
+                    title: 'Image 1'
+                }
+            },
+            {
+                src: '2.jpg',
+                payload: {
+                    title: 'Image 2'
+                }
+            },
+            '3.jpg',
+            // more images
+        ];
+
+        const photoGrid = new PhotoGridBox(el('container'), imgs);
+
+        photoGrid.setImgOnClick(function (e, imgConfig) {
+            console.log('e', e);
+            console.log('imgconfig', imgConfig);
+            {
+                var myTitle = 'TITLE';
+                var myWindow = window.open("", myTitle, '_blank', 'toolbar=no,scrollbars=no,resizable=yes');
+                myWindow.document.write("<head><title>" + myTitle + "</title></head>");
+                myWindow.document.write("<img src=" + imgConfig.src + ">");
+                return myWindow;
+            }
+        });
+
+        ////////////////////////////////////////////////////////////////////////
+        //Control logic
+        ////////////////////////////////////////////////////////////////////////
+
+        /**
+         * Called from mymap.js after it checked that if the user has
+         * arrived at a new POI
+         */
+        function stateChanged() {
+            console.log('Location has changed. It is now: ', iAmAtPOI);
+            if (iAmAtPOI > -1) {
+                arrived();
+            } else {
+                ////////////////////PHASE #0
+                view.animate({
+                    zoom: 16
+                });
+                loadInstructions();
+                nextPhase(0);
+                $('#continue').slideUp();
+                $('#directionsDiv').slideDown();
+                $('#mapDiv').slideDown();
+                document.body.style.backgroundColor = phaseColor0;
+            }
+        }
+
+        function setNextLocation(iWas) {
+            nextPOI = (iWas + 1) % maxLocations;
+        }
+
+        ////////////////////PHASE #-1 only at startup
+        $('#continue').slideUp();
+        nextPhase(0);
+        $('#mapDiv').slideUp();
+        $('#directionsDiv').slideUp();
+
+        ////////////////////PHASE #1
+        function arrived() {
+            $('#mapDiv').slideDown();
+            $('#continue').slideDown();
+            $('#directionsDiv').slideUp();
+            el('cim').innerText = thecsv[iAmAtPOI].title;
+            el('arrived').innerText = thecsv[iAmAtPOI].title;
+            document.body.style.backgroundColor = phaseColor1;
+        }
+
+        ////////////////////PHASE #2
+        function startLocal() {
+            loadContent();
+            $('#mapDiv').slideUp();
+            $('#continue').slideUp();
+            nextPhase(1);
+            document.body.style.backgroundColor = phaseColor2;
+        }
+
+        ////////////////////PHASE #3
+
+
+
+
+
+
+        function nextPhase(index) {
+            console.log('nextPhase', index);
+            var phases = ['#local1', '#local2', '#local3'];
+            for (let i = 0; i < phases.length; i++) {
+                if (i == index - 1) {
+                    if (el(phases[i].substring(1)).style.display == 'none')
+                        $(phases[i]).slideDown();
+                } else {
+                    if (el(phases[i].substring(1)).style.display == '')
+                        $(phases[i]).slideUp();
+                }
+
+            }
+        }
+
+
+
+
+
+
+
+
+        function loadCoords() {
+            thecsv.forEach(element => {
+                coords.push(element.coords.replaceAll(';', ',').split(', ').map(Number));
+            });
+            //console.log('load coords ', coords);
+            coordsToFeatures();
+        }
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
+
+        ////////////////////////////////////////////////////////////////////////
+        //Load onscreen data
+        ////////////////////////////////////////////////////////////////////////
+
+        /**
+         * PHASE #0
+         */
+        function loadInstructions() {
+            el('cim').innerText = 'Úticél: ' + nextPOI + ' ' + thecsv[nextPOI].title;
+            el('directions').innerText = thecsv[nextPOI].directions;
+            el('directionsDiv').hidden = false;
+        }
+
+        var noVideo = [],
+            src = '';
+
+        /**
+         * PHASE #2
+         */
+        function loadContent() {
+            el('directionsDiv').hidden = true;
+            el('cim').innerText = thecsv[iAmAtPOI].title;
+            if (thecsv[iAmAtPOI].description == '---') {
+                el('szovegInner').hidden = true;
+            } else {
+                el('szovegInner').hidden = false;
+                el('szovegInner').innerText = thecsv[iAmAtPOI].description;
+            }
+            loadExtras();
+        }
+
+        function loadExtras() {
+            var extras = thecsv[iAmAtPOI].extra;
+            ////////////////////AUDIO
+            el('audio1').src = thecsv[iAmAtPOI].audioFile.replace('---', '');
+            if (thecsv[iAmAtPOI].audioFile == '---') {
+                el('audio1').hidden = true;
+            } else {
+                el('audio1').hidden = false;
+                el('audio1').autoplay = extras.includes('a_autoplay');
+            }
+
+            ////////////////////VIDEO
+            var vidFil = thecsv[iAmAtPOI].videoFile;
+            console.log('vid ', vidFil);
+
+            var thereIsVideo = false;
+            if (vidFil == '---' || !vidFil) {
+                noVideo = [el('video1'), el('video2')];
+            } else if (vidFil.startsWith('v=')) {
+                ////////////////////////// YOUTUBE
+                noVideo = [el('video1')];
+                player = new YT.Player('video2', {
+                    videoId: thecsv[iAmAtPOI].videoFile.substring(2),
+                    width: window.screen.availWidth,
+                    events: {
+                        'onReady': onPlayerReady,
+                        'onStateChange': onPlayerStateChange
+                    }
+                });
+                //src = 'https://www.youtube.com/embed/' +
+                //    thecsv[iAmAtPOI].videoFile.substring(2) + '?enablejsapi=1' + '?rel=0';
+                //if (text.includes('v_autoplay'))
+                //    src += '?autoplay=1';
+
+                thereIsVideo = true;
+            } else {
+                ////////////////////////// UPLOADED FILE
+                noVideo = [el('video2')];
+                el('video1').src = thecsv[iAmAtPOI].videoFile;
+                el('video1').autoplay = extras.includes('v_autoplay');
+
+                thereIsVideo = true;
+            }
+
+            noVideo.forEach(element => {
+                element.hidden = true
+            });
+
+
+            if (thereIsVideo) {
+                /*if (text.includes('v_fullscreen')) {
+                    if (yes.requestFullscreen) {
+                        yes.requestFullscreen();
+                    } else if (yes.mozRequestFullScreen) {
+                        yes.mozRequestFullScreen();
+                    } else if (yes.webkitRequestFullscreen) {
+                        yes.webkitRequestFullscreen();
+                    } else if (yes.msRequestFullscreen) {
+                        yes.msRequestFullscreen();
+                    }
+                }*/
+            }
+            el('inputDiv').hidden = !extras.includes('input');
+        }
+
+        ////////////////////////////////////////////////////////// YOUTUBE API
+        var tag = document.createElement('script');
+        tag.id = 'iframe-demo';
+        tag.src = 'https://www.youtube.com/iframe_api';
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        var player;
+
+        function onYouTubeIframeAPIReady() {
+            console.log('READY');
+        }
+
+        function onPlayerReady(event) {
+            console.log('onplayerready', event);
+        }
+
+        function onPlayerStateChange(event) {
+            console.log('HSDKGHSDFKJG', event);
+            switch (event.data) {
+                case 0:
+                    console.log('video ended');
+                    nextPhase(2);
+                    break;
+                case 1:
+                    console.log('video playing from ' + player.getCurrentTime());
+                    break;
+                case 2:
+                    console.log('video paused at ' + player.getCurrentTime());
+            }
+        }
+
+
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
+
+
+        ////////////////////////////////////////////////////////////////////////
+        // File or text input
+        ////////////////////////////////////////////////////////////////////////
+        /*const fileUploader = el('file-uploader');
+
+        fileUploader.addEventListener('change', (event) => {
+            const files = event.target.files;
+            console.log('files', files);
+        });
+
+        function fileUploadThing() {
+            var reader = new FileReader();
+
+            //Read the contents of Image File.
+            reader.readAsDataURL(fileUploader.files[0]);
+            reader.onload = function (e) {
+
+                //Initiate the JavaScript Image object.
+                var image = new Image();
+
+                //Set the Base64 string return from FileReader as source.
+                image.src = e.target.result;
+
+                //Validate the File Height and Width.
+                image.onload = function () {
+                    var height = this.height;
+                    var width = this.width;
+                    if (height < 100 || width < 100) {
+                        alert("Height and Width must exceed 100px.");
+                        return false;
+                    }
+                    alert("Uploaded image has valid Height and Width.");
+
+                    return true;
+                };
+            };
+        }*/
+
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
+
+        ////////////////////////////////////////////////////////////////////////
+        //Read data from sheet
+        ////////////////////////////////////////////////////////////////////////
+        loadData();
+
+        var thecsv;
+        //https://stackoverflow.com/a/16493587/11227518
+        function loadData() {
+            var url =
+                "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLw1lgIpTzd9CfKe8_XGzvVpdeCkvcPxqWOOgz8USyd8CaC4smayW5LBFoC76WvLuNuFqbml6itl7g/pub?output=tsv";
+            //var url = "OSA-Munkalap1.tsv"
+            xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    //document.getElementById("display").innerHTML = xmlhttp.responseText;
+                    //console.log(xmlhttp.responseText);
+                    thecsv = csvToArray(xmlhttp.responseText);
+                    maxLocations = thecsv.length;
+                    thecsv.sort(function (a, b) {
+                        var keyA = new Date(a.order),
+                            keyB = new Date(b.order);
+                        // Compare the 2 dates
+                        if (keyA < keyB) return -1;
+                        if (keyA > keyB) return 1;
+                        return 0;
+                    });
+                    loadCoords();
+                    geolocation.setTracking(true);
+                }
+            };
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send(null);
+        }
+
+        //https://sebhastian.com/javascript-csv-to-array/
+        function csvToArray(str, delimiter = "\t") {
+            // slice from start of text to the first \n index
+            // use split to create an array from string by delimiter
+            const headers = str.slice(0, str.indexOf("\n")).split(delimiter);
+
+            // slice from \n index + 1 to the end of the text
+            // use split to create an array of each csv value row
+            const rows = str.slice(str.indexOf("\n") + 1).split("\n");
+
+            // Map the rows
+            // split values from each row into an array
+            // use headers.reduce to create an object
+            // object properties derived from headers:values
+            // the object passed as an element of the array
+            const arr = rows.map(function (row) {
+                const values = row.split(delimiter);
+                const el = headers.reduce(function (object, header, index) {
+                    object[header] = values[index];
+                    return object;
+                }, {});
+                return el;
+            });
+
+            // return the array
+            return arr;
+        }
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
+
+        //////////////////// LOCK SCREEN CONTROL DISABLE
+        /*if (navigator.mediaSession) {
+            navigator.mediaSession.setActionHandler('play', function () {
+                // Code excerpted.
+            });
+            navigator.mediaSession.setActionHandler('pause', function () {
+                // Code excerpted.
+            });
+            navigator.mediaSession.setActionHandler('stop', function () {
+                // Code excerpted.
+            });
+        }*/
+
+        /*function loadInstructions() {
+            fetch(nextLocation + '.txt')
+                .then(response => response.text())
+                .then(text => {
+                    var texts = text.split('SPLITTER');
+                    el('cim').innerText = 'Úticél: ' + texts[0];
+                    el('szovegInner').innerText = texts[1];
+                })
+        }
+
+        function loadContent() {
+            fetch(iAmAtLocation + '.txt')
+                .then(response => response.text())
+                .then(text => {
+                    var texts = text.split('SPLITTER');
+                    el('cim').innerText = texts[0];
+                    el('szovegInner').innerText = texts[2];
+                    loadExtras(texts[3]);
+                });
+
+            el('video1').src = iAmAtLocation + '.mp4';
+            el('audio1').src = iAmAtLocation + '.mp3';
+        }
+        */
+    </script>
+</body>

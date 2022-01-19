@@ -1,0 +1,63 @@
+body {
+    /*width: 420px;*/
+    /*font-family: Verdana, sans-serif;*/
+    /*font-family: "Andale Mono", AndaleMono, monospace;*/
+    font-family: 'Roboto', sans-serif;
+    /*background-color: #f0f0f0;*/
+}
+
+#start {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    font-size: xx-large;
+}
+
+div#debug {
+    column-count: 2;
+    font-size: 50%;
+    color: white;
+    background-color: gray;
+}
+
+audio,
+input {
+    width: 100%;
+}
+
+.videowrapper {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 */
+    height: 0;
+    overflow: hidden;
+}
+.videowrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+
+.scroll {
+    opacity: 50%;
+    -webkit-transition: -webkit-transform 1s linear;
+    -moz-transition: transform 1s linear;
+    -ms-transition: transform 1s linear;
+    -o-transition: transform 1s linear;
+    transition: transform 1s linear;
+}
+
+/*https://stackoverflow.com/questions/30128587/ios-safari-transition-transform-not-working/30403110*/
+.scrolling {
+    /*-webkit-transform: translate3d(100%, 0, 0);*/
+    -webkit-transform: translateX(100%);
+    -moz-transform: translateX(100%);
+    -ms-transform: translateX(100%);
+    -o-transform: translateX(100%);
+    transform: translateX(100%);
+}

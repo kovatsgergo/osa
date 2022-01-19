@@ -1,0 +1,4 @@
+order	coords	title	directions	description	text	extra	audioFile	videoFile	x
+0	47.497809, 19.068692	DOHÁNY – AKÁCFA	Menj el a Dohány utca és az Akácfa utca sarkára!	Ez itt a Dohány–Akácfa sarok, a hely sorszáma a 2.	Lórum ipse, az egész telen csúfsáf lesz a talás, ma olás klapza. Rekezes szikék: pornyos és ramós sarász, lendő brintás.	audio, a_autoplay	0.mp3	0.mp4	x
+1	47.497222, 19.067775	DOHÁNY – KLAUZÁL	Most menj át a Dohány utca és a Klauzál utca sarkára!	Ez meg itt a Dohány–Klauzál sarok, a hely sorszáma az 3.	A rekezes szike a szűző colamonok tadájával - kedi vigyommal - csosít. A tezermeli alomától, a húságok miszályától ványlik a krére.	input, video, v_autoplay, audio	1.mp3	1.mp4	x
+2	47.500382, 19.08325; 47.500454, 19.08325; 47.500454, 19.08366; 47.500382, 19.08366 	KELETI	Menj a Keletihez és amikor odaértél, keress egy padot, vagy egy olyan helyet, ahol rálátsz a sinekre és pihentető poziciót tudsz felvenni.	---	---	video, v_autoplay	---	v=z6DHhpv2ee4	x
